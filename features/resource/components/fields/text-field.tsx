@@ -1,8 +1,8 @@
-import { Textarea } from "@/components/ui/textarea";
-
 import { FieldOptionDropdown } from "./field-option-dropdown";
-import { FieldProps } from "./types";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Input } from "@/components/ui/input";
+
+import type { FieldProps } from "./types";
 
 export function TextField({ field, columnInput }: FieldProps) {
   const placeholder =
@@ -15,9 +15,9 @@ export function TextField({ field, columnInput }: FieldProps) {
   return (
     <ButtonGroup className="w-full">
       <ButtonGroup className="w-full">
-        <Textarea
+        <Input
+          type={columnInput.type}
           {...field}
-          rows={1}
           value={field.value as string}
           placeholder={placeholder}
           disabled={columnInput.disabled}
