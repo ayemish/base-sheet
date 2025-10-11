@@ -1,5 +1,3 @@
-// import { SquarePenIcon, TrashIcon } from "lucide-react";
-// import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 
 import { ResourceDetailView } from "@/features/resource/components/view/resource-detail-view";
@@ -53,11 +51,15 @@ async function ViewPage({
   );
   if (!singleResourceData) return notFound();
 
+  const pkValues = pk.join("/");
+  const editUrl = `/home/resource/${schema}/${id}/edit/${pkValues}`;
+
   return (
     <div className="mx-auto max-w-3xl p-4">
-      <div className="space-y-2.5">
+      <div className="flex flex-col gap-4">
         {/* Resource Details */}
         <ResourceDetailView
+          editUrl={editUrl}
           columnsSchema={columnsSchema ?? []}
           singleResourceData={singleResourceData ?? {}}
         />
