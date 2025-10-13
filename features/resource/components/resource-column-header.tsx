@@ -7,9 +7,6 @@ import {
   ChevronUp,
   ChevronsUpDown,
   EyeOff,
-  FingerprintIcon,
-  KeyIcon,
-  LinkIcon,
   X,
 } from "lucide-react";
 
@@ -24,6 +21,7 @@ import { ColumnSchema, TableSchema } from "@/lib/database-meta.types";
 import { cn } from "@/lib/utils";
 
 import { getDataTypeIcon } from "./icons";
+import { formatTitle } from "@/lib/format";
 
 export const ResourceColumnHeader = memo(function ResourceColumnHeader<TData, TValue>({
   column,
@@ -41,9 +39,8 @@ export const ResourceColumnHeader = memo(function ResourceColumnHeader<TData, TV
   if (!column.getCanSort() && !column.getCanHide()) {
     return (
       <div className={cn("flex items-center gap-2 truncate", className)}>
-        {/* {getColumnConstraintIcon(tableSchema, columnSchema)} */}
         {getDataTypeIcon(columnSchema)}
-        {title}
+        {formatTitle(title)}
       </div>
     );
   }
@@ -51,9 +48,8 @@ export const ResourceColumnHeader = memo(function ResourceColumnHeader<TData, TV
   return (
     <div className="relative truncate">
       <div className="flex items-center gap-2">
-        {/* {getColumnConstraintIcon(tableSchema, columnSchema)} */}
         {getDataTypeIcon(columnSchema)}
-        {title}
+        {formatTitle(title)}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -122,28 +118,3 @@ export const ResourceColumnHeader = memo(function ResourceColumnHeader<TData, TV
   tableSchema: TableSchema | null;
   columnSchema: ColumnSchema;
 }) => React.ReactElement;
-
-function getColumnConstraintIcon(
-  tableSchema: TableSchema | null,
-  columnSchema: ColumnSchema,
-) {
-  const primaryKeys = (tableSchema?.primary_keys as { name: string }[]) ?? [];
-  const foreignKeys =
-    (tableSchema?.relationships as { source_column_name: string }[]) ?? [];
-
-  if (primaryKeys.some((key) => key.name === columnSchema.name)) {
-    return <KeyIcon className="text-muted-foreground size-3" />;
-  }
-
-  if (columnSchema.is_unique) {
-    return <FingerprintIcon className="text-muted-foreground size-3" />;
-  }
-
-  if (columnSchema.is_identity) {
-    return <FingerprintIcon className="text-muted-foreground size-3" />;
-  }
-
-  if (foreignKeys.some((key) => key.source_column_name === columnSchema.name)) {
-    return <LinkIcon className="text-muted-foreground size-3" />;
-  }
-}
