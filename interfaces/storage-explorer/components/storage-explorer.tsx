@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import type { StorageFile } from "../types";
+import type { StorageFile } from "../../../features/storage/lib/types";
 import { StorageBreadcrumb } from "./storage-breadcrumb";
 import { StorageList } from "./storage-list";
 import { StorageToolbar } from "./storage-toolbar";
