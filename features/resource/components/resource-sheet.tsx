@@ -209,7 +209,7 @@ export function ResourceSheet({
               .filter(
                 (column) =>
                   !READONLY_COLUMNS.includes(column.name as string) &&
-                  !primaryKeys.includes(column.name as string),
+                  (!primaryKeys.includes(column.name as string) || create),
               )
               .map((column) => (
                 <ResourceFormField
