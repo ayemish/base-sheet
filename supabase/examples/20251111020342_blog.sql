@@ -29,23 +29,23 @@ alter type supasheet.app_permission add value 'blog.post_categories:update';
 alter type supasheet.app_permission add value 'blog.post_categories:delete';
 commit;
 
-create or replace view public.accounts
+create or replace view blog.users
 with (security_invoker = true) as
 select
     *
-from supasheet.accounts;
+from supasheet.users;
 
-revoke all on public.accounts from authenticated, service_role;
-grant select on public.accounts to authenticated;
+revoke all on blog.users from authenticated, service_role;
+grant select on blog.users to authenticated;
 
 create table if not exists blog.authors (
     id uuid default gen_random_uuid() primary key,
-    account_id uuid default auth.uid() references supasheet.accounts(id) on delete cascade,
+    user_id uuid default auth.uid() references supasheet.users(id) on delete cascade,
     language varchar(2) default 'en' not null,
     country varchar(2) default 'US' not null,
     created_at timestamp with time zone default now() not null,
     updated_at timestamp with time zone default now() not null,
-    unique (account_id, language, country)
+    unique (user_id, language, country)
 );
 
 comment on table blog.authors is
@@ -60,21 +60,21 @@ grant select, insert, update, delete on table blog.authors to authenticated;
 alter table blog.authors enable row level security;
 
 create policy "Authors can select their own author profile" on blog.authors for select using (
-    account_id = auth.uid()
+    user_id = auth.uid()
 );
 
 create policy "Authors can insert their own author profile" on blog.authors for insert with check (
-    account_id = auth.uid()
+    user_id = auth.uid()
 );
 
 create policy "Authors can update their own author profile" on blog.authors for update using (
-    account_id = auth.uid()
+    user_id = auth.uid()
 ) with check (
-    account_id = auth.uid()
+    user_id = auth.uid()
 );
 
 create policy "Authors can delete their own author profile" on blog.authors for delete using (
-    account_id = auth.uid()
+    user_id = auth.uid()
 );
 
 create table if not exists blog.social_links (
@@ -128,7 +128,7 @@ create table if not exists blog.categories (
     name varchar(100) not null,
     slug varchar(120) not null unique,
     description text,
-    account_id uuid references supasheet.accounts(id) on delete cascade
+    user_id uuid references supasheet.users(id) on delete cascade
 );
 
 comment on table blog.categories is
@@ -143,11 +143,11 @@ grant select, insert, update, delete on table blog.categories to authenticated;
 alter table blog.categories enable row level security;
 
 create policy "Users can select all blog categories" on blog.categories for select using (
-    (account_id is null OR account_id = auth.uid())
+    (user_id is null OR user_id = auth.uid())
 );
 
 create policy "Users can insert blog categories" on blog.categories for insert with check (
-    account_id = auth.uid()
+    user_id = auth.uid()
 );
 
 create table if not exists blog.posts (
@@ -181,7 +181,7 @@ create policy "Users can select all blog posts" on blog.posts for select using (
 create policy "Authors can insert their own blog posts" on blog.posts for insert with check (
     exists (
         select 1 from blog.authors a
-        where a.account_id = auth.uid() and a.id = author_id
+        where a.user_id = auth.uid() and a.id = author_id
     )
 );
 
@@ -235,26 +235,87 @@ create policy "Authors can delete post categories for their own posts" on blog.p
 );
 
 insert into supasheet.role_permissions (role, permission) values
-    ('user', 'blog.authors:select'),
-    ('user', 'blog.authors:insert'),
-    ('user', 'blog.authors:update'),
-    ('user', 'blog.authors:delete'),
+    ('x-admin', 'blog.authors:select'),
+    ('x-admin', 'blog.authors:insert'),
+    ('x-admin', 'blog.authors:update'),
+    ('x-admin', 'blog.authors:delete'),
 
-    ('user', 'blog.social_links:select'),
-    ('user', 'blog.social_links:insert'),
-    ('user', 'blog.social_links:update'),
-    ('user', 'blog.social_links:delete'),
+    ('x-admin', 'blog.social_links:select'),
+    ('x-admin', 'blog.social_links:insert'),
+    ('x-admin', 'blog.social_links:update'),
+    ('x-admin', 'blog.social_links:delete'),
 
-    ('user', 'blog.categories:select'),
-    ('user', 'blog.categories:insert'),
-    ('user', 'blog.categories:update'),
-    ('user', 'blog.categories:delete'),
+    ('x-admin', 'blog.categories:select'),
+    ('x-admin', 'blog.categories:insert'),
+    ('x-admin', 'blog.categories:update'),
+    ('x-admin', 'blog.categories:delete'),
 
-    ('user', 'blog.posts:select'),
-    ('user', 'blog.posts:insert'),
-    ('user', 'blog.posts:update'),
-    ('user', 'blog.posts:delete'),
+    ('x-admin', 'blog.posts:select'),
+    ('x-admin', 'blog.posts:insert'),
+    ('x-admin', 'blog.posts:update'),
+    ('x-admin', 'blog.posts:delete'),
     
-    ('user', 'blog.post_categories:select'),
-    ('user', 'blog.post_categories:insert'),
-    ('user', 'blog.post_categories:delete');
+    ('x-admin', 'blog.post_categories:select'),
+    ('x-admin', 'blog.post_categories:insert'),
+    ('x-admin', 'blog.post_categories:delete');
+
+-- Audit log triggers for blog.authors
+create trigger audit_blog_authors_insert
+  after insert on blog.authors
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_authors_update
+  after update on blog.authors
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_authors_delete
+  before delete on blog.authors
+  for each row execute function supasheet.audit_trigger_function();
+
+-- Audit log triggers for blog.social_links
+create trigger audit_blog_social_links_insert
+  after insert on blog.social_links
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_social_links_update
+  after update on blog.social_links
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_social_links_delete
+  before delete on blog.social_links
+  for each row execute function supasheet.audit_trigger_function();
+
+-- Audit log triggers for blog.categories
+create trigger audit_blog_categories_insert
+  after insert on blog.categories
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_categories_update
+  after update on blog.categories
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_categories_delete
+  before delete on blog.categories
+  for each row execute function supasheet.audit_trigger_function();
+
+-- Audit log triggers for blog.posts
+create trigger audit_blog_posts_insert
+  after insert on blog.posts
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_posts_update
+  after update on blog.posts
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_posts_delete
+  before delete on blog.posts
+  for each row execute function supasheet.audit_trigger_function();
+
+-- Audit log triggers for blog.post_categories
+create trigger audit_blog_post_categories_insert
+  after insert on blog.post_categories
+  for each row execute function supasheet.audit_trigger_function();
+
+create trigger audit_blog_post_categories_delete
+  before delete on blog.post_categories
+  for each row execute function supasheet.audit_trigger_function();
