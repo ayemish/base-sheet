@@ -30,7 +30,7 @@ import {
   EmptyTitle,
 } from "#/components/ui/empty"
 import { useHasPermission } from "#/hooks/use-permissions"
-import type { PrimaryKey, TableMetadata } from "#/lib/database-meta.types"
+import type { TableMetadata } from "#/lib/database-meta.types"
 import { formatTitle } from "#/lib/format"
 import type { AppPermission } from "#/lib/supabase/data/core"
 import {
@@ -197,7 +197,6 @@ function RouteComponent() {
     tableSchema?.comment ? JSON.parse(tableSchema.comment) : {}
   ) as TableMetadata
   const metaItems = meta.items ?? []
-  const primaryKeys = (tableSchema?.primary_keys ?? []) as PrimaryKey[]
   const isTable = !!tableSchema
   const canInsert = useHasPermission(
     `${schema}.${resource}:insert` as AppPermission
@@ -236,12 +235,8 @@ function RouteComponent() {
       </DefaultHeader>
       <div className="p-4">
         <ResourceTable
-          schema={schema}
-          resource={resource}
           data={resourceData?.result ?? []}
           columnsSchema={columnsSchema ?? []}
-          primaryKeys={primaryKeys}
-          isTable={isTable}
           tableSchema={tableSchema ?? null}
           sorting={sorting}
           pagination={pagination}
